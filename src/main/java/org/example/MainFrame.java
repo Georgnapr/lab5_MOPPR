@@ -10,7 +10,7 @@ public class MainFrame extends JFrame {
     private static final String DEFAULT_X1 = "1.0";
     private static final String DEFAULT_X2 = "1.0";
     private static final String DEFAULT_MU = "10.0";
-    private static final String DEFAULT_EPSILON = "1e-6";
+    private static final String DEFAULT_EPSILON = "0.001";
     private static final String DEFAULT_MAX_ITER = "100";
     private static final String DEFAULT_STATUS = "";
 
@@ -49,13 +49,19 @@ public class MainFrame extends JFrame {
 
         add(buildInputPanel(), BorderLayout.NORTH);
         add(buildCenterPanel(), BorderLayout.CENTER);
-        add(buildBottomPanel(), BorderLayout.SOUTH);
 
         table.setRowHeight(28);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowSelectionAllowed(true);
+        table.setColumnSelectionAllowed(true);
+        table.setCellSelectionEnabled(true);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        table.setFocusable(true);
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                chartPanel.setSelectedIteration(table.getSelectedRow());
+                int row = table.getSelectedRow();
+                if (row >= 0) {
+                    chartPanel.setSelectedIteration(row);
+                }
             }
         });
     }
@@ -119,24 +125,6 @@ public class MainFrame extends JFrame {
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, chartPanel, scrollPane);
         splitPane.setDividerLocation(460);
         return splitPane;
-    }
-
-    private JPanel buildBottomPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Подсказка"));
-
-        JTextArea hint = new JTextArea(
-                "Алгоритм штрафных функций уже реализован.\n" +
-                "Пока заглушками оставлены визуализация траектории и экспорт результатов.",
-                2,
-                10
-        );
-        hint.setEditable(false);
-        hint.setLineWrap(true);
-        hint.setWrapStyleWord(true);
-        hint.setBackground(UIManager.getColor("Panel.background"));
-        panel.add(hint, BorderLayout.CENTER);
-        return panel;
     }
 
     private void runCalculation() {

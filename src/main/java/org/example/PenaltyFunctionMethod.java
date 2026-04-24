@@ -26,15 +26,18 @@ public class PenaltyFunctionMethod {
         double gradientNorm = norm(g1, g2);
 
         int iteration = 0;
+        // Минимизируем Phi(x, mu) итерационным методом в стиле нелинейного сопряжённого градиента.
         while (gradientNorm > epsilon && iteration < maxIterations) {
             iterations.add(buildIteration(iteration, mu, x1, x2, gradientNorm, "Итерация метода"));
 
+            // Подбираем шаг вдоль текущего направления поиска.
             double lambda = lineSearch(x1, x2, d1, d2, mu);
             double newX1 = x1 + lambda * d1;
             double newX2 = x2 + lambda * d2;
 
             double newG1 = gradientX1(newX1, newX2, mu);
             double newG2 = gradientX2(newX1, newX2, mu);
+            // Коэффициент Флетчера-Ривза; малое число защищает от деления на ноль.
             double denominator = g1 * g1 + g2 * g2 + 1e-12;
             double beta = (newG1 * newG1 + newG2 * newG2) / denominator;
 
@@ -82,14 +85,17 @@ public class PenaltyFunctionMethod {
         return h * h;
     }
 
+    // Штрафная функция: Phi(x, mu) = F(x) + mu * h(x)^2.
     private double phi(double x1, double x2, double mu) {
         return objective(x1, x2) + mu * penalty(x1, x2);
     }
 
+    // Частная производная dPhi/dx1.
     private double gradientX1(double x1, double x2, double mu) {
         return Math.exp(x1) + 2.0 * x1 + 2.0 * x2 + 2.0 * mu * constraint(x1, x2);
     }
 
+    // Частная производная dPhi/dx2.
     private double gradientX2(double x1, double x2, double mu) {
         return 2.0 * x1 + 16.0 * Math.pow(x2, 3) + 4.0 * mu * constraint(x1, x2);
     }
@@ -98,6 +104,7 @@ public class PenaltyFunctionMethod {
         return Math.sqrt(g1 * g1 + g2 * g2);
     }
 
+    // Линейный поиск шага для Phi по правилу Армихо (с уменьшением шага).
     private double lineSearch(double x1, double x2, double d1, double d2, double mu) {
         double step = 1.0;
         double phi0 = phi(x1, x2, mu);
