@@ -115,16 +115,16 @@ public class PenaltyMethodChartPanel extends JPanel {
             plot.setDataset(1, constraintDataset(currentViewport));
             plot.setRenderer(1, lineRenderer(new Color(200, 39, 39), 2.2f));
 
-            plot.setDataset(2, trajectoryDataset(iterations));
+            plot.setDataset(2, trajectoryDataset(result));
             plot.setRenderer(2, lineRenderer(new Color(206, 80, 54), 1.8f));
 
-            plot.setDataset(3, markersDataset(iterations, current));
+            plot.setDataset(3, markersDataset(result, current));
             plot.setRenderer(3, markerRenderer());
 
             xAxis.setRange(currentViewport.minX, currentViewport.maxX);
             yAxis.setRange(currentViewport.minY, currentViewport.maxY);
             addConstraintLabel(plot, currentViewport);
-            addCurrentArrow(plot, iterations, current);
+            addCurrentArrow(plot, result, current);
             attachViewportListener(plot, xAxis, yAxis);
         }
 
@@ -149,7 +149,7 @@ public class PenaltyMethodChartPanel extends JPanel {
                 plot.clearAnnotations();
                 int current = Math.max(0, Math.min(selectedIteration, result.iterations().size() - 1));
                 addConstraintLabel(plot, viewport);
-                addCurrentArrow(plot, result.iterations(), current);
+                addCurrentArrow(plot, result, current);
             } finally {
                 updatingViewport = false;
             }
@@ -191,9 +191,11 @@ public class PenaltyMethodChartPanel extends JPanel {
         return ds;
     }
 
-    private XYSeriesCollection trajectoryDataset(List<PenaltyIterationData> iterations) {
+    private XYSeriesCollection trajectoryDataset(PenaltyMethodResult result) {
         // Preserve iteration order (k -> k+1); default XYSeries auto-sorts by X.
         XYSeries path = new XYSeries("path", false, true);
+        path.add(result.startX1(), result.startX2());
+        List<PenaltyIterationData> iterations = result.iterations();
         for (PenaltyIterationData it : iterations) {
             path.add(it.x1(), it.x2());
         }
@@ -202,15 +204,15 @@ public class PenaltyMethodChartPanel extends JPanel {
         return ds;
     }
 
-    private XYSeriesCollection markersDataset(List<PenaltyIterationData> iterations, int currentIndex) {
-        PenaltyIterationData start = iterations.get(0);
+    private XYSeriesCollection markersDataset(PenaltyMethodResult result, int currentIndex) {
+        List<PenaltyIterationData> iterations = result.iterations();
         PenaltyIterationData end = iterations.get(iterations.size() - 1);
         PenaltyIterationData current = iterations.get(currentIndex);
 
         XYSeries s0 = new XYSeries("start");
         XYSeries s1 = new XYSeries("end");
         XYSeries s2 = new XYSeries("current");
-        s0.add(start.x1(), start.x2());
+        s0.add(result.startX1(), result.startX2());
         s1.add(end.x1(), end.x2());
         s2.add(current.x1(), current.x2());
 
@@ -258,24 +260,22 @@ public class PenaltyMethodChartPanel extends JPanel {
         plot.addAnnotation(label);
     }
 
-    private void addCurrentArrow(XYPlot plot, List<PenaltyIterationData> iterations, int currentIndex) {
-        if (iterations.size() < 2) {
+    private void addCurrentArrow(XYPlot plot, PenaltyMethodResult result, int currentIndex) {
+        List<Point> points = trajectoryPoints(result);
+        if (points.size() < 2) {
             return;
         }
-        if (currentIndex >= iterations.size() - 1) {
+        if (currentIndex < 0 || currentIndex >= points.size() - 1) {
             return;
         }
 
         int from = currentIndex;
         int to = currentIndex + 1;
-        if (from < 0 || to < 0 || to >= iterations.size()) {
-            return;
-        }
 
-        PenaltyIterationData a = iterations.get(from);
-        PenaltyIterationData b = iterations.get(to);
-        double dx = b.x1() - a.x1();
-        double dy = b.x2() - a.x2();
+        Point a = points.get(from);
+        Point b = points.get(to);
+        double dx = b.x - a.x;
+        double dy = b.y - a.y;
         double step = Math.hypot(dx, dy);
         if (step < 1e-9) {
             return;
@@ -294,15 +294,24 @@ public class PenaltyMethodChartPanel extends JPanel {
         double ry = bx * Math.sin(-wing) + by * Math.cos(-wing);
 
         plot.addAnnotation(new XYLineAnnotation(
-                b.x1(), b.x2(),
-                b.x1() + len * lx, b.x2() + len * ly,
+                b.x, b.y,
+                b.x + len * lx, b.y + len * ly,
                 new BasicStroke(0.9f), new Color(206, 80, 54)
         ));
         plot.addAnnotation(new XYLineAnnotation(
-                b.x1(), b.x2(),
-                b.x1() + len * rx, b.x2() + len * ry,
+                b.x, b.y,
+                b.x + len * rx, b.y + len * ry,
                 new BasicStroke(0.9f), new Color(206, 80, 54)
         ));
+    }
+
+    private List<Point> trajectoryPoints(PenaltyMethodResult result) {
+        List<Point> points = new ArrayList<>();
+        points.add(new Point(result.startX1(), result.startX2()));
+        for (PenaltyIterationData iteration : result.iterations()) {
+            points.add(new Point(iteration.x1(), iteration.x2()));
+        }
+        return points;
     }
 
     private void onMouseMoved(ChartMouseEvent event) {
