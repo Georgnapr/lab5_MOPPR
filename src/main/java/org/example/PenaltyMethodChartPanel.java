@@ -192,7 +192,8 @@ public class PenaltyMethodChartPanel extends JPanel {
     }
 
     private XYSeriesCollection trajectoryDataset(List<PenaltyIterationData> iterations) {
-        XYSeries path = new XYSeries("path");
+        // Preserve iteration order (k -> k+1); default XYSeries auto-sorts by X.
+        XYSeries path = new XYSeries("path", false, true);
         for (PenaltyIterationData it : iterations) {
             path.add(it.x1(), it.x2());
         }
