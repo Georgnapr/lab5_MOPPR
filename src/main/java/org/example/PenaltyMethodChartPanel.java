@@ -27,6 +27,7 @@ public class PenaltyMethodChartPanel extends JPanel {
     private static final int CONTOUR_GRID = 55;
     private static final int CONTOUR_LEVELS = 12;
     private static final double POINT_SIZE = 4.0;
+    private static final Bounds DEFAULT_VIEWPORT = new Bounds(-4.0, 8.0, -2.0, 4.0);
 
     private final ChartPanel chartPanel;
     private final JLabel cursorLabel;
@@ -103,10 +104,9 @@ public class PenaltyMethodChartPanel extends JPanel {
             List<PenaltyIterationData> iterations = result.iterations();
             int current = Math.max(0, Math.min(selectedIteration, iterations.size() - 1));
 
-            Bounds modelBounds = boundsFromIterations(iterations);
-            Bounds currentViewport = viewport != null ? viewport : modelBounds;
+            Bounds currentViewport = viewport != null ? viewport : DEFAULT_VIEWPORT;
             if (contourLevels == null) {
-                contourLevels = buildContourLevels(modelBounds);
+                contourLevels = buildContourLevels(DEFAULT_VIEWPORT);
             }
 
             plot.setDataset(0, contourDataset(currentViewport, contourLevels));
@@ -360,26 +360,6 @@ public class PenaltyMethodChartPanel extends JPanel {
 
         plot.getDomainAxis().setRange(xMin + xShift, xMax + xShift);
         plot.getRangeAxis().setRange(yMin + yShift, yMax + yShift);
-    }
-
-    private Bounds boundsFromIterations(List<PenaltyIterationData> iterations) {
-        double minX = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-
-        for (PenaltyIterationData it : iterations) {
-            minX = Math.min(minX, it.x1());
-            maxX = Math.max(maxX, it.x1());
-            minY = Math.min(minY, it.x2());
-            maxY = Math.max(maxY, it.x2());
-        }
-
-        double cx = (minX + maxX) * 0.5;
-        double cy = (minY + maxY) * 0.5;
-        double hx = Math.max(2.5, (maxX - minX) * 0.9 + 1.2);
-        double hy = Math.max(2.5, (maxY - minY) * 0.9 + 1.2);
-        return new Bounds(cx - hx, cx + hx, cy - hy, cy + hy);
     }
 
     private double[] buildContourLevels(Bounds b) {
