@@ -11,7 +11,6 @@ public class MainFrame extends JFrame {
     private static final String DEFAULT_X2 = "1.0";
     private static final String DEFAULT_MU = "10.0";
     private static final String DEFAULT_EPSILON = "0.001";
-    private static final String DEFAULT_MAX_ITER = "100";
     private static final String DEFAULT_STATUS = "";
 
     private static final String[] TABLE_COLUMNS = {
@@ -22,7 +21,6 @@ public class MainFrame extends JFrame {
     private final JTextField tfX2 = new JTextField(DEFAULT_X2, 8);
     private final JTextField tfMu = new JTextField(DEFAULT_MU, 8);
     private final JTextField tfEpsilon = new JTextField(DEFAULT_EPSILON, 8);
-    private final JTextField tfMaxIter = new JTextField(DEFAULT_MAX_ITER, 8);
     private final JLabel lbModel = new JLabel(
             "  F(x1, x2) = exp(x1) + x1^2 + 2x1x2 + 4x2^4; h(x1, x2) = x1 + 2x2 - 6; Φ(x, μ) = F(x) + μ·α(x); α(x) = h(x)^2"
     );
@@ -107,12 +105,10 @@ public class MainFrame extends JFrame {
     private JPanel buildAdvancedParamsPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         panel.setOpaque(false);
-        panel.add(new JLabel("μ:  "));
+        panel.add(new JLabel("μ:"));
         panel.add(tfMu);
-        panel.add(new JLabel("ε:  "));
+        panel.add(new JLabel("ε:"));
         panel.add(tfEpsilon);
-        panel.add(new JLabel(" maxIter: "));
-        panel.add(tfMaxIter);
         return panel;
     }
 
@@ -132,19 +128,18 @@ public class MainFrame extends JFrame {
         Double x2 = parseDoubleOrNull(tfX2.getText());
         Double mu = parseDoubleOrNull(tfMu.getText());
         Double epsilon = parseDoubleOrNull(tfEpsilon.getText());
-        Integer maxIter = parseIntOrNull(tfMaxIter.getText());
 
-        if (x1 == null || x2 == null || mu == null || epsilon == null || maxIter == null) {
+        if (x1 == null || x2 == null || mu == null || epsilon == null) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Проверьте ввод x1, x2, mu, epsilon и maxIter. Все значения должны быть числовыми.",
+                    "Проверьте ввод x1, x2, mu и epsilon. Все значения должны быть числовыми.",
                     "Ошибка ввода",
                     JOptionPane.ERROR_MESSAGE
             );
             return;
         }
 
-        PenaltyMethodRequest request = new PenaltyMethodRequest(x1, x2, mu, epsilon, maxIter);
+        PenaltyMethodRequest request = new PenaltyMethodRequest(x1, x2, mu, epsilon);
         currentResult = penaltyFunctionMethod.solve(request);
         refillTable(currentResult);
         chartPanel.updateData(currentResult);
@@ -175,7 +170,6 @@ public class MainFrame extends JFrame {
         tfX2.setText(DEFAULT_X2);
         tfMu.setText(DEFAULT_MU);
         tfEpsilon.setText(DEFAULT_EPSILON);
-        tfMaxIter.setText(DEFAULT_MAX_ITER);
         lbStatus.setText(DEFAULT_STATUS);
         tableModel.setRowCount(0);
         currentResult = null;
@@ -193,14 +187,6 @@ public class MainFrame extends JFrame {
     private static Double parseDoubleOrNull(String value) {
         try {
             return Double.parseDouble(value.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static Integer parseIntOrNull(String value) {
-        try {
-            return Integer.parseInt(value.trim());
         } catch (Exception e) {
             return null;
         }
